@@ -354,7 +354,7 @@ export default function Search() {
               onChange={handleFilterChange}
               checked={filter.showAll}
             />
-            <label className='filter__label' htmlFor="showExclusives">Show All</label>
+            <label className='filter__label' htmlFor="showAll">Show All</label>
           </div>
           <div className="filter__choice-container">
             <input
