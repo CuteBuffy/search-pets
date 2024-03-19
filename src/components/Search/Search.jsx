@@ -13,7 +13,8 @@ export default function Search() {
 
   const [filter, setFilter] = useState({
     showAll: true,
-    showExclusives: false,
+    showNormalExclusives: false,
+    showGoldenExclusives: false,
     showNormalHuges: false,
     showGoldenHuges: false,
     showRainbowHuges: false,
@@ -133,6 +134,54 @@ export default function Search() {
             </div>
             <div className="rarity__container">
               <p className='pet__rarity normal__rarity'>normal</p>
+            </div>
+            <h3 className="pet__name">{pet.configName}</h3>
+            <div className="pet__info-wrapper">
+              <div className="pet__info-container">
+                <div className="pet__rap-text-cont">
+                  <p className='pet__rap-text'>Value</p>
+                  <div className="live__container">
+                    <img className='signal__img' src="./icons/signal.svg" alt="" />
+                    <p className='live__text'>live</p>
+                  </div>
+                </div>
+                <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
+              </div>
+              <div className="pet__info-container pet__exists-container">
+                <p className='pet__exists-text'>Exists</p>
+                <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      return null;
+    });
+
+  const goldenExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
+    .filter((pet) =>
+      textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
+    )
+    .map((pet) => {
+      if ((pet.configData.hasOwnProperty("exclusiveLevel") && pet.configData.hasOwnProperty("goldenThumbnail") && pet.configData.goldenThumbnail !== '')) {
+        const relevantRapData = petsRap.data.find(
+          (petRap) =>
+            petRap.category === "Pet" && petRap.configData.id === pet.configName && petRap.configData.hasOwnProperty('pt') && petRap.configData.pt === 1
+        );
+        const findPetExists = petsExists.data.find(
+          petExist =>
+            petExist.configData.id === pet.configName &&
+            petExist.configData.hasOwnProperty("pt") && petExist.configData.pt === 1
+        )
+        const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
+        const petExists = findPetExists ? findPetExists.value : "N/A"
+        return (
+          <div key={pet.configName} className="pet__container">
+            <div className="pet__img-container">
+              <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.goldenThumbnail.replace(/[^0-9]/g, "")}`} alt={`golden ${pet.configName} image`} />
+            </div>
+            <div className="rarity__container">
+              <p className='pet__rarity golden__rarity'>golden</p>
             </div>
             <h3 className="pet__name">{pet.configName}</h3>
             <div className="pet__info-wrapper">
@@ -360,12 +409,23 @@ export default function Search() {
             <input
               className='filter__input'
               type='checkbox'
-              id='showExclusives'
-              name='showExclusives'
+              id='showNormalExclusives'
+              name='showNormalExclusives'
               onChange={handleFilterChange}
-              checked={filter.showExclusives}
+              checked={filter.showNormalExclusives}
             />
-            <label className='filter__label' htmlFor="showExclusives">Normal Exclusives</label>
+            <label className='filter__label' htmlFor="showNormalExclusives">Normal Exclusives</label>
+          </div>
+          <div className="filter__choice-container">
+            <input
+              className='filter__input'
+              type='checkbox'
+              id='showGoldenExclusives'
+              name='showGoldenExclusives'
+              onChange={handleFilterChange}
+              checked={filter.showGoldenExclusives}
+            />
+            <label className='filter__label' htmlFor="showGoldenExclusives">Golden Exclusives</label>
           </div>
           <div className="filter__choice-container">
             <input
@@ -424,7 +484,8 @@ export default function Search() {
         </div>
       </div>
       {(petsData && petsRap && enchantsData) ? <div className="pets__container">
-        {(filter.showAll || filter.showExclusives) && normalExclusiveElem}
+        {(filter.showAll || filter.showNormalExclusives) && normalExclusiveElem}
+        {(filter.showAll || filter.showGoldenExclusives) && goldenExclusiveElem}
         {(filter.showAll || filter.showNormalHuges) && normalHugeElem}
         {(filter.showAll || filter.showGoldenHuges) && goldenHugeElem}
         {(filter.showAll || filter.showRainbowHuges) && rainbowHugePetElem}

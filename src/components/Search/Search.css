@@ -256,7 +256,6 @@
 
 .search__input:focus {
   outline: none;
-  filter: drop-shadow(0 0 0.2rem #888888c5);
 }
 
 .pets__container {
@@ -379,6 +378,7 @@
   width: 100px;
   height: 100px;
   object-fit: contain;
+  /* filter: sepia(100%) hue-rotate(19deg) saturate(100%); */
 }
 
 .pet__exists-text {
