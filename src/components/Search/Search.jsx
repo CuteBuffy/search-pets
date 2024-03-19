@@ -98,8 +98,15 @@ export default function Search() {
     return num.toString();
   };
 
-  const handleFilterChange = (e) => {
+  const delay = async (ms) => {
+    return new Promise((resolve) =>
+      setTimeout(resolve, ms)
+    )
+  }
+
+  const handleFilterChange = async (e) => {
     const { name, value, type, checked } = e.target
+    await delay(200)
     setFilter(prevFilter => ({
       ...prevFilter,
       [name]: type === 'checkbox' ? checked : value
