@@ -12,14 +12,17 @@ export default function Search() {
   // FILTERS //
 
   const [filter, setFilter] = useState({
-    showAll: true,
+    showAll: false,
     showNormalExclusives: false,
     showGoldenExclusives: false,
+    showRainbowExclusives: false,
     showNormalHuges: false,
     showGoldenHuges: false,
     showRainbowHuges: false,
-    showEnchants: false,
+    showEnchants: true,
   })
+
+  const [showFilter, setShowFilter] = useState(false)
 
   const getText = (e) => {
     const { value } = e.target;
@@ -65,7 +68,7 @@ export default function Search() {
       }
     }
     getExists();
-  })
+  }, [])
 
   useEffect(() => {
     const getEnchants = async () => {
@@ -105,6 +108,10 @@ export default function Search() {
       ...prevFilter,
       [name]: type === 'checkbox' ? checked : value
     }))
+  }
+
+  const handleShowFilter = () => {
+    setShowFilter(prevShowFilter => !prevShowFilter)
   }
 
   const normalExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
@@ -205,6 +212,51 @@ export default function Search() {
       }
       return null;
     });
+
+  const rainbowExclusiveElem = (petsRap && petsData && petsExists) && petsData.data.filter((pet) =>
+    textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
+  ).map(pet => {
+    if (pet.configData.hasOwnProperty("exclusiveLevel")) {
+      const relevantRapData = petsRap.data.find(
+        (petRap) =>
+          petRap.configData.id === pet.configName && petRap.configData.pt === 2
+      );
+      const findPetExists = petsExists.data.find(
+        (petExists) =>
+          petExists.configData.id === pet.configName && petExists.configData.pt === 2
+      )
+      const rapValue = relevantRapData ? relevantRapData.value : "O/C"
+      const petExists = findPetExists ? findPetExists.value : "N/A"
+      return (
+        <div key={`rainbow ${pet.configName}`} className="pet__container">
+          <div className="pet__img-container">
+            <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.thumbnail.replace(/[^0-9]/g, "")}`} alt={`Rainbow ${pet.configName} image`} />
+          </div>
+          <div className="rarity__container">
+            <p className='pet__rarity rainbow__rarity'>rainbow</p>
+          </div>
+          <h3 className="pet__name">{pet.configName}</h3>
+          <div className="pet__info-wrapper">
+            <div className="pet__info-container">
+              <div className="pet__rap-text-cont">
+                <p className='pet__rap-text'>Value</p>
+                <div className="live__container">
+                  <img className='signal__img' src="./icons/signal.svg" alt="" />
+                  <p className='live__text'>live</p>
+                </div>
+              </div>
+              <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
+            </div>
+            <div className="pet__info-container pet__exists-container">
+              <p className='pet__exists-text'>Exists</p>
+              <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+    return null;
+  })
 
   const normalHugeElem = (petsData && petsRap && petsExists) && petsData.data
     .filter((pet) =>
@@ -393,7 +445,18 @@ export default function Search() {
         <h1 className='search__title'></h1>
       </div>
       <div className="search__wrapper">
-        <div className="filter__buttons-container">
+        <div className="input__container">
+          <input
+            onChange={getText}
+            className="search__input"
+            placeholder="Search For Pet"
+          />
+          <button onClick={handleShowFilter} className="search__btn">
+            <p className='filter__title'>Filters</p>
+            <img className="search__img" src="./icons/filter.svg" alt="" />
+          </button>
+        </div>
+        {showFilter && <div className="filter__buttons-container">
           <div className="filter__choice-container">
             <input
               className='filter__input'
@@ -426,6 +489,17 @@ export default function Search() {
               checked={filter.showGoldenExclusives}
             />
             <label className='filter__label' htmlFor="showGoldenExclusives">Golden Exclusives</label>
+          </div>
+          <div className="filter__choice-container">
+            <input
+              className='filter__input'
+              type='checkbox'
+              id='showRainbowExclusives'
+              name='showRainbowExclusives'
+              onChange={handleFilterChange}
+              checked={filter.showRainbowExclusives}
+            />
+            <label className='filter__label' htmlFor="showRainbowExclusives">Rainbow Exclusives</label>
           </div>
           <div className="filter__choice-container">
             <input
@@ -471,21 +545,12 @@ export default function Search() {
             />
             <label className='filter__label' htmlFor="showEnchants">Enchants</label>
           </div>
-        </div>
-        <div className="input__container">
-          <input
-            onChange={getText}
-            className="search__input"
-            placeholder="Search For Pet"
-          />
-          <button className="search__btn">
-            <img className="search__img" src="./icons/search.svg" alt="" />
-          </button>
-        </div>
+        </div>}
       </div>
       {(petsData && petsRap && enchantsData) ? <div className="pets__container">
         {(filter.showAll || filter.showNormalExclusives) && normalExclusiveElem}
         {(filter.showAll || filter.showGoldenExclusives) && goldenExclusiveElem}
+        {(filter.showAll || filter.showRainbowExclusives) && rainbowExclusiveElem}
         {(filter.showAll || filter.showNormalHuges) && normalHugeElem}
         {(filter.showAll || filter.showGoldenHuges) && goldenHugeElem}
         {(filter.showAll || filter.showRainbowHuges) && rainbowHugePetElem}

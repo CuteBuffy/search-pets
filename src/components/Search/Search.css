@@ -224,6 +224,7 @@
 
 .search__btn {
   flex: 1.5;
+  gap: 0.5rem;
   background-color: green;
   display: flex;
   align-items: center;
@@ -372,13 +373,13 @@
   max-width: 100px;
   max-height: 100px;
   position: relative;
+  display: flex;
 }
 
 .pet__img {
   width: 100px;
   height: 100px;
   object-fit: contain;
-  /* filter: sepia(100%) hue-rotate(19deg) saturate(100%); */
 }
 
 .pet__exists-text {
@@ -424,7 +425,9 @@
 
 .rainbow__img {
   position: absolute;
-  top: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 100px;
   height: 100px;
   opacity: 40%;
@@ -433,12 +436,15 @@
 .filter__buttons-container {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(1fr, 1fr));
   gap: 0.7rem;
   flex-wrap: wrap;
 }
 
 .filter__choice-container {
+  padding: 0.5rem 0.5rem;
+  background-color: #44159b;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 0.2rem;
@@ -462,6 +468,12 @@
   color: #fff;
 }
 
+.filter__title {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
 @media (max-width: 320px) {
   .pet__name {
     font-size: 1.2rem;
@@ -483,6 +495,10 @@
 @media (max-width: 640px) {
   .search__title-container {
     min-height: 6rem;
+  }
+
+  .filter__title {
+    display: none;
   }
 
   .search__title {
