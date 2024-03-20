@@ -1,4 +1,12 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react';
+
+const debounce = (func, delay) => {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(this, args), delay);
+  };
+};
 
 export default function Search() {
 
@@ -7,30 +15,30 @@ export default function Search() {
   const [petsData, setPetsData] = useState(null);
   const [petsRap, setPetsRap] = useState(null);
   const [petsExists, setPetExists] = useState(null)
-  const [enchantsData, setEcnhantsData] = useState(null)
+  const [enchantsData, setEnchantsData] = useState(null)
 
   // FILTERS //
 
   const [filter, setFilter] = useState({
-    showAll: false,
+    showAll: true,
     showNormalExclusives: false,
     showGoldenExclusives: false,
     showRainbowExclusives: false,
     showNormalHuges: false,
     showGoldenHuges: false,
     showRainbowHuges: false,
-    showEnchants: true,
+    showEnchants: false,
   })
 
   const [showFilter, setShowFilter] = useState(false)
 
-  const getText = (e) => {
+  const handleTextChange = (e) => {
     const { value } = e.target;
     setTextValue(value);
   };
 
   useEffect(() => {
-    const getPets = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch('https://pets-api-production-4acc.up.railway.app/pets');
         const data = await res.json();
@@ -39,12 +47,11 @@ export default function Search() {
         console.error('Error fetching pets data:', error);
       }
     };
-
-    getPets();
+    fetchData();
   }, []);
 
   useEffect(() => {
-    const getRap = async () => {
+    const fetchData = async () => {
       try {
         const res = await fetch('https://pets-api-production-4acc.up.railway.app/rap');
         const data = await res.json();
@@ -53,35 +60,36 @@ export default function Search() {
         console.error('Error fetching rap data:', error);
       }
     };
-
-    getRap();
+    fetchData();
   }, []);
 
   useEffect(() => {
-    const getExists = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("https://pets-api-production-4acc.up.railway.app/exists")
+        const res = await fetch('https://pets-api-production-4acc.up.railway.app/exists');
         const data = await res.json();
-        setPetExists(data)
+        setPetExists(data);
       } catch (error) {
-        console.error("Error fetching exists data:", error)
+        console.error('Error fetching exists data:', error);
       }
-    }
-    getExists();
-  }, [])
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
-    const getEnchants = async () => {
+    const fetchData = async () => {
       try {
-        const res = await fetch("https://pets-api-production-4acc.up.railway.app/enchants")
-        const data = await res.json()
-        setEcnhantsData(data)
+        const res = await fetch('https://pets-api-production-4acc.up.railway.app/enchants');
+        const data = await res.json();
+        setEnchantsData(data);
       } catch (error) {
-        console.error("Error fetching enchants data:", error)
+        console.error('Error fetching enchants data:', error);
       }
-    }
-    getEnchants();
-  }, [])
+    };
+    fetchData();
+  }, []);
+
+  const debouncedTextChange = useMemo(() => debounce(handleTextChange, 300), []);
 
   const nFormatter = (num, digits) => {
     const lookup = [
@@ -447,7 +455,7 @@ export default function Search() {
       <div className="search__wrapper">
         <div className="input__container">
           <input
-            onChange={getText}
+            onChange={debouncedTextChange}
             className="search__input"
             placeholder="Search For Pet"
           />
