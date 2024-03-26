@@ -17,11 +17,18 @@ export default function Search() {
   const [petsExists, setPetExists] = useState(null)
   const [enchantsData, setEnchantsData] = useState(null)
 
+  // PETS DATA // 
+
+  const [exclusiveNormalPetsData, setExclusiveNormalPetsData] = useState(null);
+  const [exclusiveGoldenPetsData, setExclusiveGoldenPetsData] = useState(null);
+  const [exclusiveRainbowPetsData, setExclusiveRainbowPetsData] = useState(null);
+  const [hugePetsData, setHugePetsData] = useState(null);
+
   // FILTERS //
 
   const [filter, setFilter] = useState({
-    showAll: true,
-    showNormalExclusives: false,
+    showAll: false,
+    showNormalExclusives: true,
     showGoldenExclusives: false,
     showRainbowExclusives: false,
     showNormalHuges: false,
@@ -31,6 +38,68 @@ export default function Search() {
   })
 
   const [showFilter, setShowFilter] = useState(false)
+
+  // PAGINATION //
+
+  const [currentPage, setCurrentPage] = useState(1)
+  const [maxCardsPP, setMaxCardsPP] = useState(20)
+
+  const lastCardIndex = currentPage * maxCardsPP
+  const firstCardIndex = lastCardIndex - maxCardsPP
+  const totalPageNumber = (exclusiveNormalPetsData) && Math.ceil(exclusiveNormalPetsData.data.length / maxCardsPP)
+  const pageNumbers = (totalPageNumber) && [...Array(totalPageNumber + 1).keys()].slice(1)
+
+  const nextPage = () => {
+    if (currentPage !== totalPageNumber) {
+      setCurrentPage(prevCurrentPage => prevCurrentPage + 1)
+    }
+  }
+
+  const prevPage = () => {
+    if (currentPage !== 1) {
+      setCurrentPage(prevCurrentPage => prevCurrentPage - 1)
+    }
+  }
+
+  const changePage = pageNumber => {
+    setCurrentPage(pageNumber)
+  }
+
+  // EXCLUSIVE PETS //
+
+  useEffect(() => {
+    if (petsData) {
+      const exclusivePets = petsData.data.filter(pet => pet.configData && pet.configData.hasOwnProperty("exclusiveLevel"));
+      setExclusiveNormalPetsData(prevNormalExclusivePetsData => ({
+        ...prevNormalExclusivePetsData,
+        data: exclusivePets
+      }));
+    }
+  }, [petsData]);
+
+  useEffect(() => {
+    if (petsData) {
+      const exclusiveGoldenPets = petsData.data.filter(pet => pet.configData && (pet.configData.hasOwnProperty("exclusiveLevel") && pet.configData.hasOwnProperty("goldenThumbnail") && pet.configData.goldenThumbnail !== ''));
+      setExclusiveGoldenPetsData(prevGoldenExclusivePetsData => ({
+        ...prevGoldenExclusivePetsData,
+        data: exclusiveGoldenPets
+      }));
+    }
+  }, [petsData]);
+
+  useEffect(() => {
+    if (petsData) {
+      const exclusiveRainbowPets = petsData.data.filter(pet => pet.configData && (pet.configData.hasOwnProperty("exclusiveLevel")));
+      setExclusiveRainbowPetsData(prevRainbowExclusivePetsData => ({
+        ...prevRainbowExclusivePetsData,
+        data: exclusiveRainbowPets
+      }));
+    }
+  }, [petsData]);
+
+  // HUGE PETS //
+
+  // CODE //
 
   const handleTextChange = (e) => {
     const { value } = e.target;
@@ -122,7 +191,7 @@ export default function Search() {
     setShowFilter(prevShowFilter => !prevShowFilter)
   }
 
-  const normalExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
+  const normalExclusiveElem = (petsData && petsRap && petsExists && exclusiveNormalPetsData) && exclusiveNormalPetsData.data.slice(firstCardIndex, lastCardIndex)
     .filter((pet) =>
       textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
     )
@@ -141,7 +210,7 @@ export default function Search() {
             !petExist.configData.hasOwnProperty("sh")
         )
         const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
-        const petExists = findPetExists ? findPetExists.value : "N/A"
+        const petExists = findPetExists ? findPetExists.value : "N/A";
         return (
           <div key={pet.configName} className="pet__container">
             <div className="pet__img-container">
@@ -173,7 +242,7 @@ export default function Search() {
       return null;
     });
 
-  const goldenExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
+  const goldenExclusiveElem = (petsData && petsRap && petsExists && exclusiveGoldenPetsData) && exclusiveGoldenPetsData.data.slice(firstCardIndex, lastCardIndex)
     .filter((pet) =>
       textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
     )
@@ -221,7 +290,7 @@ export default function Search() {
       return null;
     });
 
-  const rainbowExclusiveElem = (petsRap && petsData && petsExists) && petsData.data.filter((pet) =>
+  const rainbowExclusiveElem = (petsRap && petsData && petsExists && exclusiveRainbowPetsData) && exclusiveRainbowPetsData.data.slice(firstCardIndex, lastCardIndex).filter((pet) =>
     textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
   ).map(pet => {
     if (pet.configData.hasOwnProperty("exclusiveLevel")) {
@@ -555,15 +624,38 @@ export default function Search() {
           </div>
         </div>}
       </div>
-      {(petsData && petsRap && enchantsData) ? <div className="pets__container">
-        {(filter.showAll || filter.showNormalExclusives) && normalExclusiveElem}
-        {(filter.showAll || filter.showGoldenExclusives) && goldenExclusiveElem}
-        {(filter.showAll || filter.showRainbowExclusives) && rainbowExclusiveElem}
-        {(filter.showAll || filter.showNormalHuges) && normalHugeElem}
-        {(filter.showAll || filter.showGoldenHuges) && goldenHugeElem}
-        {(filter.showAll || filter.showRainbowHuges) && rainbowHugePetElem}
-        {(filter.showAll || filter.showEnchants) && enchantElem}
-      </div> : <p className="loading__text">Loading...</p>}
+      {
+        (petsData && petsRap && enchantsData) ? (
+          <>
+            <div className="pets__container">
+              {(filter.showAll || filter.showNormalExclusives) && normalExclusiveElem}
+              {(filter.showAll || filter.showGoldenExclusives) && goldenExclusiveElem}
+              {(filter.showAll || filter.showRainbowExclusives) && rainbowExclusiveElem}
+              {(filter.showAll || filter.showNormalHuges) && normalHugeElem}
+              {(filter.showAll || filter.showGoldenHuges) && goldenHugeElem}
+              {(filter.showAll || filter.showRainbowHuges) && rainbowHugePetElem}
+              {(filter.showAll || filter.showEnchants) && enchantElem}
+            </div>
+            {((filter.showNormalExclusives || filter.showGoldenExclusives || filter.showRainbowExclusives) && <div className='pagination__container'>
+              <ul className='pagination__items-container'>
+                <li className='pagination__item'>
+                  <a onClick={prevPage} className='pagination__btn'>Prev</a>
+                </li>
+                {pageNumbers && pageNumbers.map(number => (
+                  <li className='pagination__item pagination__numbers' key={number}>
+                    <a onClick={() => {
+                      changePage(number)
+                    }} className={`pagination__btn ${number === currentPage && "pagination__active"}`}>{number}</a>
+                  </li>
+                ))}
+                <li className='pagination__item'>
+                  <a onClick={nextPage} className='pagination__btn'>Next</a>
+                </li>
+              </ul>
+            </div>)}
+          </>
+        ) : <p className="loading__text">Loading...</p>
+      }
     </>
   );
 }
