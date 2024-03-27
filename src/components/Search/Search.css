@@ -6,6 +6,10 @@
   gap: 0.8rem;
 }
 
+alt {
+  color: #fff;
+}
+
 .input__container {
   display: flex;
   width: 100%;
@@ -474,43 +478,6 @@
   font-weight: 500;
 }
 
-.pagination__container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  max-width: 80rem;
-}
-
-.pagination__items-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  justify-content: center;
-  width: 100%;
-  flex-wrap: wrap;
-}
-
-.pagination__btn {
-  color: #fff;
-  border: 1px solid cyan;
-  font-size: 1.2rem;
-  padding: 0.3rem 1rem;
-  text-align: center;
-  transition: color 0.3s, background-color 0.3s;
-  cursor: pointer;
-}
-
-.pagination__active {
-  background-color: cyan;
-  color: #000;
-}
-
-.pagination__btn:hover {
-  background-color: cyan;
-  color: #000;
-}
-
 @media (max-width: 320px) {
   .pet__name {
     font-size: 1.2rem;
@@ -540,10 +507,6 @@
 
   .search__title {
     font-size: 2rem;
-  }
-
-  .pagination__numbers {
-    display: none;
   }
 }
 
