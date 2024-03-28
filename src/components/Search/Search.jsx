@@ -32,14 +32,12 @@ export default function Search() {
   const indexOfLastPost = page * maxPerPage
   const indexOfFirstPost = indexOfLastPost - maxPerPage
 
-  const totalPages = (filter.showNormalExclusives || filter.showGoldenExclusives || filter.showRainbowExclusives) ? Math.ceil((petsData?.data.filter(pet => pet.configData.hasOwnProperty("exclusiveLevel")).length || 0) / maxPerPage) : (filter.showNormalHuges || filter.showGoldenHuges || filter.showRainbowHuges) ? Math.ceil((petsData?.data.filter(pet => !pet.configName.includes("Evolved") && pet.category === 'Huge').length || 0) / maxPerPage) : (filter.showAll) && Math.ceil(petsData?.data.length / maxPerPage);
+  const totalPages = (filter.showNormalExclusives || filter.showGoldenExclusives || filter.showRainbowExclusives) ? Math.ceil((petsData?.data.filter(pet => pet.configData.hasOwnProperty("exclusiveLevel")).length || 0) / maxPerPage) : (filter.showNormalHuges || filter.showGoldenHuges || filter.showRainbowHuges) && Math.ceil((petsData?.data.filter(pet => !pet.configName.includes("Evolved") && pet.category === 'Huge').length || 0) / maxPerPage);
 
   const currentExclusivePosts = petsData && petsData.data.filter(pet => pet.configData.hasOwnProperty("exclusiveLevel"))
     .slice(indexOfFirstPost, indexOfLastPost);
 
   const currentHugePosts = petsData && petsData.data.filter(pet => !pet.configName.includes("Evolved") && pet.category === 'Huge').slice(indexOfFirstPost, indexOfLastPost)
-
-  const currentAllPosts = (petsData && enchantsData) && petsData.data.slice(indexOfFirstPost, indexOfLastPost) + enchantsData.data.slice(indexOfFirstPost, indexOfLastPost)
 
   const handleNextPage = () => {
     setPage(prevPage => prevPage + 1);
