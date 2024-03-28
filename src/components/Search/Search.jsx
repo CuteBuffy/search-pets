@@ -467,6 +467,7 @@ export default function Search() {
         <div className="input__container">
           <input
             onChange={handleTextChange}
+            value={textValue}
             className="search__input"
             placeholder="Search For Pet"
           />
