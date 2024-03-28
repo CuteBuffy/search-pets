@@ -1,17 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
-
-const debounce = (func, delay) => {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func.apply(this, args), delay);
-  };
-};
+import React, { useState, useEffect } from 'react';
 
 export default function Search() {
 
   // DATA //
   const [textValue, setTextValue] = useState('');
+  const [petsApi, setPetsApi] = useState(null)
   const [petsData, setPetsData] = useState(null);
   const [petsRap, setPetsRap] = useState(null);
   const [petsExists, setPetExists] = useState(null)
@@ -20,7 +13,6 @@ export default function Search() {
   // FILTERS //
 
   const [filter, setFilter] = useState({
-    showAll: false,
     showNormalExclusives: true,
     showGoldenExclusives: false,
     showRainbowExclusives: false,
@@ -32,19 +24,56 @@ export default function Search() {
 
   const [showFilter, setShowFilter] = useState(false)
 
+  // PAGINATION // 
+
+  const [page, setPage] = useState(1);
+  const [maxPerPage, setMaxPerPage] = useState(20);
+
+  const indexOfLastPost = page * maxPerPage
+  const indexOfFirstPost = indexOfLastPost - maxPerPage
+
+  const totalPages = (filter.showNormalExclusives || filter.showGoldenExclusives || filter.showRainbowExclusives) ? Math.ceil((petsData?.data.filter(pet => pet.configData.hasOwnProperty("exclusiveLevel")).length || 0) / maxPerPage) : (filter.showNormalHuges || filter.showGoldenHuges || filter.showRainbowHuges) ? Math.ceil((petsData?.data.filter(pet => !pet.configName.includes("Evolved") && pet.category === 'Huge').length || 0) / maxPerPage) : (filter.showAll) && Math.ceil(petsData?.data.length / maxPerPage);
+
+  const currentExclusivePosts = petsData && petsData.data.filter(pet => pet.configData.hasOwnProperty("exclusiveLevel"))
+    .slice(indexOfFirstPost, indexOfLastPost);
+
+  const currentHugePosts = petsData && petsData.data.filter(pet => !pet.configName.includes("Evolved") && pet.category === 'Huge').slice(indexOfFirstPost, indexOfLastPost)
+
+  const currentAllPosts = (petsData && enchantsData) && petsData.data.slice(indexOfFirstPost, indexOfLastPost) + enchantsData.data.slice(indexOfFirstPost, indexOfLastPost)
+
+  const handleNextPage = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    setPage(prevPage => prevPage - 1);
+  };
+
   // CODE //
 
   const handleTextChange = (e) => {
     const { value } = e.target;
     setTextValue(value);
+    const newData = (petsApi) && petsApi.data.filter(pet =>
+      value === '' ? true : pet.configName.toLowerCase().includes(value.toLowerCase().trim())
+    )
+    if (value !== '' && newData.length > maxPerPage) {
+      setPage(1);
+    }
+    setPetsData(prevPetsData => ({
+      ...prevPetsData,
+      data: newData
+    }))
   };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://pets-api-production-4acc.up.railway.app/pets');
+        const res = await fetch(`https://pets-api-production-4acc.up.railway.app/pets`);
         const data = await res.json();
-        setPetsData(data);
+        setPetsApi(data);
+        let petsData = data
+        setPetsData(petsData)
       } catch (error) {
         console.error('Error fetching pets data:', error);
       }
@@ -91,8 +120,6 @@ export default function Search() {
     fetchData();
   }, []);
 
-  const debouncedTextChange = useMemo(() => debounce(handleTextChange, 300), []);
-
   const nFormatter = (num, digits) => {
     const lookup = [
       { value: 1e18, symbol: "E" },
@@ -124,108 +151,98 @@ export default function Search() {
     setShowFilter(prevShowFilter => !prevShowFilter)
   }
 
-  const normalExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
-    .filter((pet) =>
-      textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-    )
-    .map((pet) => {
-      if ((pet.configData.hasOwnProperty("exclusiveLevel"))) {
-        const relevantRapData = petsRap.data.find(
-          (petRap) =>
-            petRap.category === "Pet" && petRap.configData.id === pet.configName &&
-            !petRap.configData.hasOwnProperty('pt') &&
-            !petRap.configData.hasOwnProperty('sh')
-        );
-        const findPetExists = petsExists.data.find(
-          petExist =>
-            petExist.configData.id === pet.configName &&
-            !petExist.configData.hasOwnProperty("pt") &&
-            !petExist.configData.hasOwnProperty("sh")
-        )
-        const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
-        const petExists = findPetExists ? findPetExists.value : "N/A";
-        return (
-          <div key={pet.configName} className="pet__container">
-            <div className="pet__img-container">
-              <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.thumbnail.replace(/[^0-9]/g, "")}`} alt={`${pet.configName} image`} />
-            </div>
-            <div className="rarity__container">
-              <p className='pet__rarity normal__rarity'>normal</p>
-            </div>
-            <h3 className="pet__name">{pet.configName}</h3>
-            <div className="pet__info-wrapper">
-              <div className="pet__info-container">
-                <div className="pet__rap-text-cont">
-                  <p className='pet__rap-text'>Value</p>
-                  <div className="live__container">
-                    <img className='signal__img' src="./icons/signal.svg" alt="" />
-                    <p className='live__text'>live</p>
-                  </div>
+  const normalExclusiveElem = (currentExclusivePosts && petsRap && petsExists) && currentExclusivePosts.map((pet) => {
+    if (pet.configData.hasOwnProperty("exclusiveLevel")) {
+      const relevantRapData = petsRap.data.find(
+        (petRap) =>
+          petRap.category === "Pet" && petRap.configData.id === pet.configName &&
+          !petRap.configData.hasOwnProperty('pt') &&
+          !petRap.configData.hasOwnProperty('sh')
+      );
+      const findPetExists = petsExists.data.find(
+        petExist =>
+          petExist.configData.id === pet.configName &&
+          !petExist.configData.hasOwnProperty("pt") &&
+          !petExist.configData.hasOwnProperty("sh")
+      )
+      const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
+      const petExists = findPetExists ? findPetExists.value : "N/A";
+      return (
+        <div key={pet.configName} className="pet__container">
+          <div className="pet__img-container">
+            <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.thumbnail.replace(/[^0-9]/g, "")}`} alt={`${pet.configName} image`} />
+          </div>
+          <div className="rarity__container">
+            <p className='pet__rarity normal__rarity'>normal</p>
+          </div>
+          <h3 className="pet__name">{pet.configName}</h3>
+          <div className="pet__info-wrapper">
+            <div className="pet__info-container">
+              <div className="pet__rap-text-cont">
+                <p className='pet__rap-text'>Value</p>
+                <div className="live__container">
+                  <img className='signal__img' src="./icons/signal.svg" alt="" />
+                  <p className='live__text'>live</p>
                 </div>
-                <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
               </div>
-              <div className="pet__info-container pet__exists-container">
-                <p className='pet__exists-text'>Exists</p>
-                <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
-              </div>
+              <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
+            </div>
+            <div className="pet__info-container pet__exists-container">
+              <p className='pet__exists-text'>Exists</p>
+              <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
             </div>
           </div>
-        );
-      }
-      return null;
-    });
+        </div>
+      );
+    }
+    return null;
+  });
 
-  const goldenExclusiveElem = (petsData && petsRap && petsExists) && petsData.data
-    .filter((pet) =>
-      textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-    )
-    .map((pet) => {
-      if ((pet.configData.hasOwnProperty("exclusiveLevel") && pet.configData.hasOwnProperty("goldenThumbnail") && pet.configData.goldenThumbnail !== '')) {
-        const relevantRapData = petsRap.data.find(
-          (petRap) =>
-            petRap.category === "Pet" && petRap.configData.id === pet.configName && petRap.configData.hasOwnProperty('pt') && petRap.configData.pt === 1 && !petRap.configData.hasOwnProperty("sh")
-        );
-        const findPetExists = petsExists.data.find(
-          petExist =>
-            petExist.configData.id === pet.configName &&
-            petExist.configData.hasOwnProperty("pt") && petExist.configData.pt === 1 && !petExist.configData.hasOwnProperty("sh")
-        )
-        const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
-        const petExists = findPetExists ? findPetExists.value : "N/A"
-        return (
-          <div key={pet.configName} className="pet__container">
-            <div className="pet__img-container">
-              <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.goldenThumbnail.replace(/[^0-9]/g, "")}`} alt={`golden ${pet.configName} image`} />
-            </div>
-            <div className="rarity__container">
-              <p className='pet__rarity golden__rarity'>golden</p>
-            </div>
-            <h3 className="pet__name">{pet.configName}</h3>
-            <div className="pet__info-wrapper">
-              <div className="pet__info-container">
-                <div className="pet__rap-text-cont">
-                  <p className='pet__rap-text'>Value</p>
-                  <div className="live__container">
-                    <img className='signal__img' src="./icons/signal.svg" alt="" />
-                    <p className='live__text'>live</p>
-                  </div>
+  const goldenExclusiveElem = (currentExclusivePosts && petsRap && petsExists) && currentExclusivePosts.map((pet) => {
+    if ((pet.configData.hasOwnProperty("exclusiveLevel"))) {
+      const relevantRapData = petsRap.data.find(
+        (petRap) =>
+          petRap.category === "Pet" && petRap.configData.id === pet.configName && petRap.configData.hasOwnProperty('pt') && petRap.configData.pt === 1 && !petRap.configData.hasOwnProperty("sh")
+      );
+      const findPetExists = petsExists.data.find(
+        petExist =>
+          petExist.configData.id === pet.configName &&
+          petExist.configData.hasOwnProperty("pt") && petExist.configData.pt === 1 && !petExist.configData.hasOwnProperty("sh")
+      )
+      const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
+      const petExists = findPetExists ? findPetExists.value : "N/A"
+      return (
+        <div key={pet.configName} className="pet__container">
+          <div className="pet__img-container">
+            <img className='pet__img' src={pet.configData.goldenThumbnail ? `https://biggamesapi.io/image/${pet.configData.goldenThumbnail.replace(/[^0-9]/g, "")}` : `https://placehold.co/100x100?text=No+Image`} alt={`golden ${pet.configName} image`} />
+          </div>
+          <div className="rarity__container">
+            <p className='pet__rarity golden__rarity'>golden</p>
+          </div>
+          <h3 className="pet__name">{pet.configName}</h3>
+          <div className="pet__info-wrapper">
+            <div className="pet__info-container">
+              <div className="pet__rap-text-cont">
+                <p className='pet__rap-text'>Value</p>
+                <div className="live__container">
+                  <img className='signal__img' src="./icons/signal.svg" alt="" />
+                  <p className='live__text'>live</p>
                 </div>
-                <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
               </div>
-              <div className="pet__info-container pet__exists-container">
-                <p className='pet__exists-text'>Exists</p>
-                <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
-              </div>
+              <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
+            </div>
+            <div className="pet__info-container pet__exists-container">
+              <p className='pet__exists-text'>Exists</p>
+              <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
             </div>
           </div>
-        );
-      }
-      return null;
-    });
+        </div>
+      );
+    }
+    return null;
+  });
 
-  const rainbowExclusiveElem = (petsRap && petsData && petsExists) && petsData.data.filter((pet) =>
-    textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-  ).map(pet => {
+  const rainbowExclusiveElem = (currentExclusivePosts && petsRap && petsExists) && currentExclusivePosts.map(pet => {
     if (pet.configData.hasOwnProperty("exclusiveLevel")) {
       const relevantRapData = petsRap.data.find(
         (petRap) =>
@@ -268,61 +285,55 @@ export default function Search() {
     return null;
   })
 
-  const normalHugeElem = (petsData && petsRap && petsExists) && petsData.data
-    .filter((pet) =>
-      textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-    )
-    .map((pet) => {
-      if (!pet.configName.includes("Evolved") && pet.category === 'Huge') {
-        const relevantRapData = petsRap.data.find(
-          (petRap) =>
-            petRap.configData.id === pet.configName &&
-            !petRap.configData.hasOwnProperty('pt') &&
-            !petRap.configData.hasOwnProperty('sh')
-        );
-        const findPetExists = petsExists.data.find(
-          petExist =>
-            petExist.configData.id === pet.configName &&
-            !petExist.configData.hasOwnProperty("pt") &&
-            !petExist.configData.hasOwnProperty("sh")
-        )
-        const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
-        const petExists = findPetExists ? findPetExists.value : "N/A"
-        return (
-          <div key={pet.configName} className="pet__container">
-            <div className="pet__img-container">
-              <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.thumbnail.replace(/[^0-9]/g, "")}`} alt={`${pet.configName} image`} />
-            </div>
-            <div className="rarity__container">
-              <p className='pet__rarity normal__rarity'>normal</p>
-            </div>
-            <h3 className="pet__name">{pet.configName}</h3>
-            <div className="pet__info-wrapper">
-              <div className="pet__info-container">
-                <div className="pet__rap-text-cont">
-                  <p className='pet__rap-text'>Value</p>
-                  <div className="live__container">
-                    <img className='signal__img' src="./icons/signal.svg" alt="" />
-                    <p className='live__text'>live</p>
-                  </div>
+  const normalHugeElem = (currentHugePosts && petsRap && petsExists) && currentHugePosts.map((pet) => {
+    if (!pet.configName.includes("Evolved") && pet.category === 'Huge') {
+      const relevantRapData = petsRap.data.find(
+        (petRap) =>
+          petRap.configData.id === pet.configName &&
+          !petRap.configData.hasOwnProperty('pt') &&
+          !petRap.configData.hasOwnProperty('sh')
+      );
+      const findPetExists = petsExists.data.find(
+        petExist =>
+          petExist.configData.id === pet.configName &&
+          !petExist.configData.hasOwnProperty("pt") &&
+          !petExist.configData.hasOwnProperty("sh")
+      )
+      const rapValue = relevantRapData ? relevantRapData.value : 'O/C';
+      const petExists = findPetExists ? findPetExists.value : "N/A"
+      return (
+        <div key={pet.configName} className="pet__container">
+          <div className="pet__img-container">
+            <img className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.thumbnail.replace(/[^0-9]/g, "")}`} alt={`${pet.configName} image`} />
+          </div>
+          <div className="rarity__container">
+            <p className='pet__rarity normal__rarity'>normal</p>
+          </div>
+          <h3 className="pet__name">{pet.configName}</h3>
+          <div className="pet__info-wrapper">
+            <div className="pet__info-container">
+              <div className="pet__rap-text-cont">
+                <p className='pet__rap-text'>Value</p>
+                <div className="live__container">
+                  <img className='signal__img' src="./icons/signal.svg" alt="" />
+                  <p className='live__text'>live</p>
                 </div>
-                <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
               </div>
-              <div className="pet__info-container pet__exists-container">
-                <p className='pet__exists-text'>Exists</p>
-                <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
-              </div>
+              <p className="pet__rap">{nFormatter(rapValue, 1)}</p>
+            </div>
+            <div className="pet__info-container pet__exists-container">
+              <p className='pet__exists-text'>Exists</p>
+              <p className='pet__exists-value'>{nFormatter(petExists, 1)}</p>
             </div>
           </div>
-        );
-      }
-      return null;
-    });
+        </div>
+      );
+    }
+    return null;
+  });
 
-  const goldenHugeElem = (petsRap && petsData && petsExists) && petsData.data.filter((pet) =>
-    textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-  ).map(pet => {
-    if ((pet.configData.hasOwnProperty("goldenThumbnail") && pet.configData.goldenThumbnail !== '' && pet.category === "Huge" && !pet.configName.includes("Evolved"))) {
+  const goldenHugeElem = (petsRap && currentHugePosts && petsExists) && currentHugePosts.map(pet => {
+    if ((pet.category === "Huge" && !pet.configName.includes("Evolved"))) {
       const relevantRapData = petsRap.data.find(
         (petRap) =>
           petRap.configData.id === pet.configName && petRap.configData.pt === 1 && !petRap.configData.hasOwnProperty("sh")
@@ -336,7 +347,7 @@ export default function Search() {
       return (
         <div key={`golden ${pet.configName}`} className="pet__container">
           <div className="pet__img-container">
-            {pet.configData.goldenThumbnail !== "" ? <img key={pet.configData.indexDesc} className='pet__img' src={`https://biggamesapi.io/image/${pet.configData.goldenThumbnail.replace(/[^0-9]/g, "")}`} alt={`Golden ${pet.configName} image`} /> : <img src="https://placehold.co/100x100" alt="" />}
+            <img key={pet.configData.indexDesc} className='pet__img' src={pet.configData.goldenThumbnail ? `https://biggamesapi.io/image/${pet.configData.goldenThumbnail.replace(/[^0-9]/g, "")}` : `https://placehold.co/100x100?text=No+Image`} alt={`Golden ${pet.configName} image`} />
           </div>
           <div className="rarity__container">
             <p className='pet__rarity golden__rarity'>golden</p>
@@ -364,9 +375,7 @@ export default function Search() {
     return null;
   })
 
-  const rainbowHugePetElem = (petsRap && petsData && petsExists) && petsData.data.filter((pet) =>
-    textValue === '' ? true : pet.configName.toLowerCase().includes(textValue.toLowerCase().trim())
-  ).map(pet => {
+  const rainbowHugePetElem = (petsRap && currentHugePosts && petsExists) && currentHugePosts.map(pet => {
     if ((pet.category === "Huge" && !pet.configName.includes("Evolved"))) {
       const relevantRapData = petsRap.data.find(
         (petRap) =>
@@ -457,7 +466,7 @@ export default function Search() {
       <div className="search__wrapper">
         <div className="input__container">
           <input
-            onChange={debouncedTextChange}
+            onChange={handleTextChange}
             className="search__input"
             placeholder="Search For Pet"
           />
@@ -467,17 +476,6 @@ export default function Search() {
           </button>
         </div>
         {showFilter && <div className="filter__buttons-container">
-          <div className="filter__choice-container">
-            <input
-              className='filter__input'
-              type='checkbox'
-              id='showAll'
-              name='showAll'
-              onChange={handleFilterChange}
-              checked={filter.showAll}
-            />
-            <label className='filter__label' htmlFor="showAll">Show All</label>
-          </div>
           <div className="filter__choice-container">
             <input
               className='filter__input'
@@ -557,21 +555,26 @@ export default function Search() {
           </div>
         </div>}
       </div>
-      {
-        (petsData && petsRap && enchantsData) ? (
+      <>
+        {(petsData && petsRap && enchantsData) ? (
           <>
             <div className="pets__container">
-              {(filter.showAll || filter.showNormalExclusives) && normalExclusiveElem}
-              {(filter.showAll || filter.showGoldenExclusives) && goldenExclusiveElem}
-              {(filter.showAll || filter.showRainbowExclusives) && rainbowExclusiveElem}
-              {(filter.showAll || filter.showNormalHuges) && normalHugeElem}
-              {(filter.showAll || filter.showGoldenHuges) && goldenHugeElem}
-              {(filter.showAll || filter.showRainbowHuges) && rainbowHugePetElem}
-              {(filter.showAll || filter.showEnchants) && enchantElem}
+              {(filter.showNormalExclusives) && normalExclusiveElem}
+              {(filter.showGoldenExclusives) && goldenExclusiveElem}
+              {(filter.showRainbowExclusives) && rainbowExclusiveElem}
+              {(filter.showNormalHuges) && normalHugeElem}
+              {(filter.showGoldenHuges) && goldenHugeElem}
+              {(filter.showRainbowHuges) && rainbowHugePetElem}
+              {(filter.showEnchants) && enchantElem}
             </div>
+            {totalPages && <div className="pagination__container">
+              <button className='pagination__btn' onClick={handlePrevPage} disabled={page === 1}>Previous</button>
+              <span className='pagination__text'>{page} of {totalPages}</span>
+              <button className='pagination__btn' onClick={handleNextPage} disabled={page === totalPages}>Next</button>
+            </div>}
           </>
-        ) : <p className="loading__text">Loading...</p>
-      }
+        ) : <p className="loading__text">Loading...</p>}
+      </>
     </>
   );
 }

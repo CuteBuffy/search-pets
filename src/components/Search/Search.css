@@ -470,12 +470,41 @@ alt {
 
 .filter__label {
   color: #fff;
+  width: 100%;
 }
 
 .filter__title {
   color: #fff;
   font-size: 1.5rem;
   font-weight: 500;
+}
+
+.pagination__container {
+  max-width: 80rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+}
+
+.pagination__btn {
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid cyan;
+  transition: all 0.3s;
+}
+
+.pagination__btn:hover {
+  background-color: rgb(0, 153, 255);
+  border: 1px solid rgb(0, 153, 255);
+  color: #000000;
+}
+
+.pagination__text {
+  color: #fff;
+  font-size: 1.2rem;
 }
 
 @media (max-width: 320px) {
