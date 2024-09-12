@@ -67,7 +67,7 @@ export default function Search() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`https://pets-api-production-4acc.up.railway.app/pets`);
+        const res = await fetch(`https://get-pets-api.onrender.com/pets`);
         const data = await res.json();
         setPetsApi(data);
         let petsData = data
@@ -82,7 +82,7 @@ export default function Search() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://pets-api-production-4acc.up.railway.app/rap');
+        const res = await fetch('https://get-pets-api.onrender.com/rap');
         const data = await res.json();
         setPetsRap(data);
       } catch (error) {
@@ -95,7 +95,7 @@ export default function Search() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://pets-api-production-4acc.up.railway.app/exists');
+        const res = await fetch('https://get-pets-api.onrender.com/exists');
         const data = await res.json();
         setPetExists(data);
       } catch (error) {
@@ -108,7 +108,7 @@ export default function Search() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch('https://pets-api-production-4acc.up.railway.app/enchants');
+        const res = await fetch('https://get-pets-api.onrender.com/enchants');
         const data = await res.json();
         setEnchantsData(data);
       } catch (error) {
